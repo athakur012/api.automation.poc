@@ -1,6 +1,7 @@
 package http;
 
 import com.google.gson.Gson;
+import io.cucumber.datatable.DataTable;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
@@ -15,11 +16,11 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 
 
-public class StatusStep {
+public class GetStep {
 
     private int statusCode;
     private String responseBody;
-
+    TodoItem actualResponse;
     @Before
     public void setUp() {
         System.out.println("Setting up before scenario execution");
@@ -52,16 +53,34 @@ public class StatusStep {
 
     }
 
-   @Then("^the user ID is (\\d+), the ID is (\\d+), the title is \"([^\"]*)\", and it is (not )?completed$")
+   @Then("^the user ID is (\\d+), the ID is (\\d+), the title is \"([^\"]*)\", and it (is|is not) completed$")
    public void validateResponseMessage(int userId, int id, String title, Boolean status){
 
         Gson gson = new Gson();
 
         //Deserialize JSON to object
-        TodoItem todoItem = gson.fromJson(responseBody, TodoItem.class);
-       // Assert.assertEquals("", title, todoItem.);
+       actualResponse = gson.fromJson(responseBody, TodoItem.class);
 
+        TodoItem expectedResponse = new TodoItem(userId, id, title, status);
+        Assert.assertEquals("Actual response is same as expected response", expectedResponse, actualResponse);
 
     }
 
+    @Then("the response contains the following TodoItem details:")
+    public void theResponseContainsTheFollowingTodoItemDetails(DataTable dataTable) {
+
+        int userId = Integer.parseInt(dataTable.cell(1,1));
+        int id = Integer.parseInt(dataTable.cell(2,1));
+        String title = dataTable.cell(3,1);
+        boolean completed  = Boolean.parseBoolean(dataTable.cell(4,1));
+
+        Gson gson = new Gson();
+
+        //Deserialize JSON to object
+        actualResponse = gson.fromJson(responseBody, TodoItem.class);
+
+        TodoItem expectedResponse = new TodoItem(userId, id, title, completed);
+        Assert.assertEquals("Actual response is same as expected response", expectedResponse, actualResponse);
+
+    }
 }
